@@ -1,15 +1,9 @@
-FROM azul/zulu-openjdk-alpine:11-jre
+FROM openjdk:8-jre-alpine
 #FROM openjdk:8-jre
-#FROM openjdk:8-jre-alpine
-#FROM openjdk:11-jre-slim
-#FROM oracle/graalvm-ce
+#FROM azul/zulu-openjdk-alpine:8-jre
+#FROM azul/zulu-openjdk-alpine:11-jre
 
 MAINTAINER Michael Panchenko <panchmp@gmail.com>
-
-#ADD ./data/GeoLite2-City.mmdb /app/data/maxmind/
-ADD https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz /app/data/
-#RUN mkdir -p /app/data/maxmind/
-#RUN tar -xvzf /app/data/GeoLite2-City.tar.gz --strip=1 -C /app/data/maxmind/
 
 COPY ./target/*.jar /app/
 COPY ./target/dependency/*.jar /app/

@@ -12,10 +12,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <scala.prefix>2.12</scala.prefix>
-        <scala.version>${scala.prefix}.8</scala.version>
+        <scala.version>${scala.prefix}.10</scala.version>
 
-        <vertx.scala.version>3.8.0</vertx.scala.version>
-        <vertx.version>3.8.4</vertx.version>
+        <vertx.version>3.8.5</vertx.version>
     </properties>
 
     <!--
@@ -36,17 +35,28 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-lang-scala_${scala.prefix}</artifactId>
-            <version>${vertx.scala.version}</version>
+            <version>${vertx.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web-scala_${scala.prefix}</artifactId>
-            <version>${vertx.scala.version}</version>
+            <version>${vertx.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
+            <artifactId>vertx-config-scala_${scala.prefix}</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-config-hocon-scala_${scala.prefix}</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
             <artifactId>vertx-web-client-scala_${scala.prefix}</artifactId>
-            <version>${vertx.scala.version}</version>
+            <version>${vertx.version}</version>
         </dependency>
 
 
@@ -102,9 +112,23 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-unit</artifactId>
+            <version>${vertx.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
         <pluginManagement>
             <plugins>
                 <plugin>

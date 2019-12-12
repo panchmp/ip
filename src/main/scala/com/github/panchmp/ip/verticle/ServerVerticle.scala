@@ -19,7 +19,7 @@ class ServerVerticle extends ScalaVerticle {
     val router: Router = Router.router(vertx)
 
     router.get("/api/ip/:ip").handler(ctx => {
-      val ip = ctx.request().getParam("ip").getOrElse("")
+      val ip = ctx.request().getParam("ip")
 
       vertx.eventBus().sendFuture[String]("maxmind/ip", ip).onComplete {
         case Success(msg: Message[String]) =>
