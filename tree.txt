@@ -1,0 +1,55 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.github.panchmp:ip >------------------------
+[INFO] Building ip 0.1-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:3.1.1:tree (default-cli) @ ip ---
+[INFO] com.github.panchmp:ip:jar:0.1-SNAPSHOT
+[INFO] +- org.scala-lang:scala-library:jar:2.12.10:compile
+[INFO] +- io.vertx:vertx-lang-scala_2.12:jar:3.8.5:compile
+[INFO] |  \- org.scala-lang:scala-reflect:jar:2.12.7:compile
+[INFO] +- io.vertx:vertx-web-scala_2.12:jar:3.8.5:compile
+[INFO] |  \- io.vertx:vertx-web-common-scala_2.12:jar:3.8.5:compile
+[INFO] +- io.vertx:vertx-config-scala_2.12:jar:3.8.5:compile
+[INFO] |  \- io.vertx:vertx-config:jar:3.8.5:compile
+[INFO] +- io.vertx:vertx-config-hocon-scala_2.12:jar:3.8.5:compile
+[INFO] |  \- io.vertx:vertx-config-hocon:jar:3.8.5:compile
+[INFO] |     \- com.typesafe:config:jar:1.3.0:compile
+[INFO] +- io.vertx:vertx-web-client-scala_2.12:jar:3.8.5:compile
+[INFO] |  \- io.vertx:vertx-web-client:jar:3.8.5:compile
+[INFO] +- io.vertx:vertx-core:jar:3.8.5:compile
+[INFO] |  +- io.netty:netty-common:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-buffer:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-transport:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-handler:jar:4.1.42.Final:compile
+[INFO] |  |  \- io.netty:netty-codec:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-handler-proxy:jar:4.1.42.Final:compile
+[INFO] |  |  \- io.netty:netty-codec-socks:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-codec-http:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-codec-http2:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-resolver:jar:4.1.42.Final:compile
+[INFO] |  +- io.netty:netty-resolver-dns:jar:4.1.42.Final:compile
+[INFO] |  |  \- io.netty:netty-codec-dns:jar:4.1.42.Final:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.9.9:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.9.9.1:compile
+[INFO] |     \- com.fasterxml.jackson.core:jackson-annotations:jar:2.9.0:compile
+[INFO] +- io.vertx:vertx-web:jar:3.8.5:compile
+[INFO] |  +- io.vertx:vertx-web-common:jar:3.8.5:compile
+[INFO] |  +- io.vertx:vertx-auth-common:jar:3.8.5:compile
+[INFO] |  \- io.vertx:vertx-bridge-common:jar:3.8.5:compile
+[INFO] +- com.maxmind.db:maxmind-db:jar:1.2.2:compile
+[INFO] +- org.apache.commons:commons-compress:jar:1.19:compile
+[INFO] +- org.apache.logging.log4j:log4j-api:jar:2.12.1:compile
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.12.1:compile
+[INFO] +- org.apache.logging.log4j:log4j-slf4j-impl:jar:2.12.1:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.7.29:compile
+[INFO] +- junit:junit:jar:4.12:test
+[INFO] |  \- org.hamcrest:hamcrest-core:jar:1.3:test
+[INFO] \- io.vertx:vertx-unit:jar:3.8.5:test
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.112 s
+[INFO] Finished at: 2020-03-25T01:34:56-04:00
+[INFO] ------------------------------------------------------------------------
