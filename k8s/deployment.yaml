@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geoip-deployment
+  labels:
+    app: geoip
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geoip
+  template:
+    metadata:
+      labels:
+        app: geoip
+        version: v1
+    spec:
+      containers:
+        - image: panchmp:geoip:v1
+          imagePullPolicy: Always
+          name: geoip
+          ports:
+            - containerPort: 8080
+              name: http

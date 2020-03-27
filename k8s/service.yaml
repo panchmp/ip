@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: geoip-service
+spec:
+  selector:
+    app: geoip
+  ports:
+    - port: 80
+      targetPort: 8080
