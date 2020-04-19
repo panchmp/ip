@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class ServerVerticle extends ScalaVerticle {
-  private val log = LoggerFactory.getLogger(classOf[ServerVerticle])
+class Server extends ScalaVerticle {
+  private val log = LoggerFactory.getLogger(classOf[Server])
 
   override def startFuture(): Future[Unit] = {
 
@@ -20,16 +20,17 @@ class ServerVerticle extends ScalaVerticle {
 
     router.get("/api/ip/:ip").handler(ctx => {
       val ip = ctx.request().getParam("ip")
-
       vertx.eventBus().sendFuture[String]("maxmind/ip", ip).onComplete {
         case Success(msg: Message[String]) =>
           ctx.response()
             .putHeader(HttpHeaders.CONTENT_TYPE.toString, "application/json; charset=utf-8")
             .end(msg.body())
         case Failure(ex) =>
+          log.error("Can't process response for ip:" + ip, ex)
           ctx.response()
             .setStatusCode(500)
-            .end(ex.getMessage)
+            .setStatusMessage(ex.getMessage)
+            .end()
       }
     })
 

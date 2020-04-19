@@ -12,9 +12,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <scala.prefix>2.12</scala.prefix>
-        <scala.version>${scala.prefix}.10</scala.version>
+        <scala.version>${scala.prefix}.11</scala.version>
 
-        <vertx.version>3.8.5</vertx.version>
+        <vertx.version>3.9.0</vertx.version>
     </properties>
 
     <!--

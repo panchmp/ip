@@ -1,7 +1,7 @@
 package com.github.panchmp.ip
 
 
-import com.github.panchmp.ip.verticle.{MaxMindVerticle, ServerVerticle}
+import com.github.panchmp.ip.verticle.{MaxMindService, MaxMindUpdater, Server}
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
 import io.vertx.core.logging.SLF4JLogDelegateFactory
@@ -45,13 +45,16 @@ object Application {
         {
           val instances = config.getInteger("verticle.server.instances")
           val deploymentOptions = DeploymentOptions().setConfig(config).setInstances(instances)
-          vertx.deployVerticleFuture(nameForVerticle[ServerVerticle], deploymentOptions)
+          vertx.deployVerticleFuture(nameForVerticle[Server], deploymentOptions)
         },
         {
-
+          val deploymentOptions = DeploymentOptions().setConfig(config)
+          vertx.deployVerticleFuture(nameForVerticle[MaxMindUpdater], deploymentOptions)
+        },
+        {
           val instances = config.getInteger("verticle.maxmind.instances")
           val deploymentOptions = DeploymentOptions().setConfig(config).setInstances(instances)
-          vertx.deployVerticleFuture(nameForVerticle[MaxMindVerticle], deploymentOptions)
+          vertx.deployVerticleFuture(nameForVerticle[MaxMindService], deploymentOptions)
         }
       )
     )
