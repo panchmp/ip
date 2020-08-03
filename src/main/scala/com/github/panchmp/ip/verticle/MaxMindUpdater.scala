@@ -16,6 +16,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.utils.IOUtils
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -107,11 +108,16 @@ class MaxMindUpdater extends ScalaVerticle {
     if (maxMindDbPath == null || maxMindDbPath.isEmpty) {
       log.warn("Config option [maxmind.db.local.path] not specified")
     } else {
-      vertx.fileSystem().readFileFuture(maxMindDbPath).flatMap((archiveBuffer: Buffer) => {
-        val dbBuffer = extractDBFile(archiveBuffer)
-        saveFile(dbBuffer, "local")
+      val fileSystem = vertx.fileSystem()
+      fileSystem.readDirFuture(maxMindDbPath, ".*\\.tar\\.gz").flatMap((strings: mutable.Buffer[String]) => {
+        val path = strings.max
+        log.info("Load MaxMind DB {}", path)
+        fileSystem.readFileFuture(path).flatMap((archiveBuffer: Buffer) => {
+          val dbBuffer = extractDBFile(archiveBuffer)
+          saveFile(dbBuffer, "local")
+        }).map(_ => path)
       }).onComplete({
-        case Success(_) => log.info("Successfully update MaxMind DB from {}", maxMindDbPath);
+        case Success(v) => log.info("Successfully update MaxMind DB from {}", v);
         case Failure(ex) => log.error("Can't update MaxMind DB from " + maxMindDbPath, ex)
       })
     }
