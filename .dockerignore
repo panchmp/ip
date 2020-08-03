@@ -1,0 +1,6 @@
+.idea
+k8s
+src
+target
+!target/dependency
+!target/*.jar
