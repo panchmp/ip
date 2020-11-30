@@ -1,7 +1,9 @@
 package com.github.panchmp.ip.verticle
 
 import io.vertx.core.http.HttpHeaders
+import io.vertx.ext.web.{RoutingContext => JRoutingContext}
 import io.vertx.lang.scala.ScalaVerticle
+import io.vertx.micrometer.PrometheusScrapingHandler
 import io.vertx.scala.core.eventbus.Message
 import io.vertx.scala.ext.web.Router
 import io.vertx.scala.ext.web.handler.ErrorHandler
@@ -34,6 +36,10 @@ class Server extends ScalaVerticle {
       }
     })
 
+    router.route("/metrics").handler(e => {
+      PrometheusScrapingHandler.create.handle(e.asJava.asInstanceOf[JRoutingContext])
+    })
+
     router.route.failureHandler(ErrorHandler.create(true))
 
     val port = config.getInteger("server.http.port", 8080)
@@ -42,5 +48,4 @@ class Server extends ScalaVerticle {
       .listenFuture(port)
       .map(_ => ())
   }
-
 }

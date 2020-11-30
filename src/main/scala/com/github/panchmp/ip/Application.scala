@@ -1,33 +1,51 @@
 package com.github.panchmp.ip
 
 
+import java.util
+
 import com.github.panchmp.ip.verticle.{MaxMindService, MaxMindUpdater, Server}
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.prometheus.{PrometheusConfig, PrometheusMeterRegistry}
 import io.vertx.core.json.JsonObject
 import io.vertx.core.logging.LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME
 import io.vertx.core.logging.SLF4JLogDelegateFactory
 import io.vertx.lang.scala.ScalaVerticle.nameForVerticle
 import io.vertx.lang.scala.VertxExecutionContext
+import io.vertx.micrometer.{Label, MicrometerMetricsOptions, VertxPrometheusOptions}
 import io.vertx.scala.config.{ConfigRetriever, ConfigRetrieverOptions, ConfigStoreOptions}
 import io.vertx.scala.core._
+import io.vertx.scala.core.metrics.MetricsOptions
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object Application {
-  System.setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, classOf[SLF4JLogDelegateFactory].getName)
-  val options: VertxOptions = VertxOptions().setFileResolverCachingEnabled(true)
-  val vertx: Vertx = Vertx.vertx(options)
   private val log = LoggerFactory.getLogger(Application.getClass)
 
-  implicit val vertxExecutionContext: VertxExecutionContext = VertxExecutionContext(vertx.getOrCreateContext())
-
   def main(args: Array[String]): Unit = {
+    System.setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, Predef.classOf[SLF4JLogDelegateFactory].getName)
 
-    val configRetrieverOptions = buildConfigRetrieverOptions()
+    val options: VertxOptions = VertxOptions()
+      .setFileResolverCachingEnabled(true)
+      .setMetricsOptions(getMetricsOptions)
+
+    val vertx: Vertx = Vertx.vertx(options)
+
+    implicit val vertxExecutionContext: VertxExecutionContext = VertxExecutionContext.apply(vertx.getOrCreateContext())
+
+    val configRetrieverOptions = buildConfigRetrieverOptions().setScanPeriod(-1);
+
     ConfigRetriever.create(vertx, configRetrieverOptions).getConfigFuture()
-      .flatMap((jsonObject: JsonObject) => {
-        deployVerticles(jsonObject)
+      .flatMap((config: JsonObject) => {
+        vertx.deployVerticleFuture(nameForVerticle[Server],
+          DeploymentOptions().setConfig(config).setInstances(config.getInteger("verticle.server.instances")))
+
+        vertx.deployVerticleFuture(nameForVerticle[MaxMindUpdater],
+          DeploymentOptions().setConfig(config))
+
+        vertx.deployVerticleFuture(nameForVerticle[MaxMindService],
+          DeploymentOptions().setConfig(config).setInstances(config.getInteger("verticle.maxmind.instances")))
+
       }).onComplete {
       case Success(_) => log.info("Vertx is started")
       case Failure(t) =>
@@ -39,25 +57,17 @@ object Application {
     }
   }
 
-  private def deployVerticles(config: JsonObject) = {
-    Future.sequence(
-      Seq(
-        {
-          val instances = config.getInteger("verticle.server.instances")
-          val deploymentOptions = DeploymentOptions().setConfig(config).setInstances(instances)
-          vertx.deployVerticleFuture(nameForVerticle[Server], deploymentOptions)
-        },
-        {
-          val deploymentOptions = DeploymentOptions().setConfig(config)
-          vertx.deployVerticleFuture(nameForVerticle[MaxMindUpdater], deploymentOptions)
-        },
-        {
-          val instances = config.getInteger("verticle.maxmind.instances")
-          val deploymentOptions = DeploymentOptions().setConfig(config).setInstances(instances)
-          vertx.deployVerticleFuture(nameForVerticle[MaxMindService], deploymentOptions)
-        }
-      )
-    )
+  private def getMetricsOptions = {
+    val meterRegistry: MeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+
+    val micrometerMetricsOptions = new MicrometerMetricsOptions()
+      .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+      .setMicrometerRegistry(meterRegistry)
+      .setJvmMetricsEnabled(true)
+      .setLabels(util.EnumSet.of(Label.LOCAL, Label.HTTP_CODE))
+      .setEnabled(true)
+
+    MetricsOptions(micrometerMetricsOptions)
   }
 
   private def buildConfigRetrieverOptions() = {

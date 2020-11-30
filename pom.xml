@@ -12,10 +12,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <scala.prefix>2.12</scala.prefix>
-        <scala.version>${scala.prefix}.11</scala.version>
+        <scala.version>${scala.prefix}.12</scala.version>
 
         <vertx.scala.version>3.9.1</vertx.scala.version>
-        <vertx.version>3.9.2</vertx.version>
+        <vertx.version>3.9.4</vertx.version>
     </properties>
 
     <!--
@@ -73,6 +73,22 @@
         </dependency>
 
         <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-micrometer-metrics</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.maxmind.db</groupId>
             <artifactId>maxmind-db</artifactId>
             <version>1.4.0</version>
@@ -87,17 +103,17 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.13.3</version>
+            <version>2.14.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.13.3</version>
+            <version>2.14.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.13.3</version>
+            <version>2.14.0</version>
         </dependency>
 
         <dependency>
@@ -110,7 +126,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -123,7 +139,7 @@
         <dependency>
             <groupId>io.gatling.highcharts</groupId>
             <artifactId>gatling-charts-highcharts</artifactId>
-            <version>3.3.1</version>
+            <version>3.4.2</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -191,12 +207,12 @@
                 <plugin>
                     <groupId>io.gatling</groupId>
                     <artifactId>gatling-maven-plugin</artifactId>
-                    <version>3.0.5</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.basepom.maven</groupId>
                     <artifactId>duplicate-finder-maven-plugin</artifactId>
-                    <version>1.4.0</version>
+                    <version>1.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -286,7 +302,7 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
-                            <includeScope>compile</includeScope>
+                            <includeScope>runtime</includeScope>
                         </configuration>
                     </execution>
                 </executions>
