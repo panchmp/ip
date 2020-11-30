@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
 
 import com.github.panchmp.ip.utils.CloseableUtils.using
+import com.typesafe.scalalogging.StrictLogging
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
@@ -14,26 +15,24 @@ import io.vertx.scala.ext.web.client.{HttpResponse, WebClient, WebClientOptions}
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.utils.IOUtils
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class MaxMindUpdater extends ScalaVerticle {
-  private val log = LoggerFactory.getLogger(classOf[MaxMindUpdater])
+class MaxMindUpdater extends ScalaVerticle with StrictLogging {
 
   private var path: Option[String] = Option.empty
   private var lastModified: Option[String] = Option.empty
 
   override def start(): Unit = {
-    vertx.eventBus().localConsumer[String]("maxmind/update/local", (_: Message[String]) => {
+    vertx.eventBus().localConsumer("maxmind/update/local", (_: Message[Unit]) => {
       updateByLocal()
     })
 
-    scheduleLocalUpdate
+    scheduleLocalUpdate()
 
-    vertx.eventBus().localConsumer[String]("maxmind/update/remote", (_: Message[String]) => {
+    vertx.eventBus().localConsumer("maxmind/update/remote", (_: Message[Unit]) => {
       downloadMaxmind()
     })
 
@@ -46,7 +45,7 @@ class MaxMindUpdater extends ScalaVerticle {
     )
   }
 
-  def scheduleLocalUpdate = {
+  def scheduleLocalUpdate(): Unit = {
     vertx.eventBus().publish("maxmind/update/local", None)
   }
 
@@ -54,9 +53,9 @@ class MaxMindUpdater extends ScalaVerticle {
     vertx.eventBus().publish("maxmind/update/remote", None)
   }
 
-  private def downloadMaxmind(): Unit = {
+  def downloadMaxmind(): Unit = {
     Option(config.getString("maxmind.db.remote.url")).fold {
-      log.warn("Config option [maxmind.db.remote.url] not specified")
+      logger.warn("Config option [maxmind.db.remote.url] not specified")
     }((remoteUrl: String) => {
       val apiKey = config.getString("maxmind.license.key", "")
       val url = remoteUrl.replace("LICENSE_KEY", apiKey)
@@ -76,9 +75,9 @@ class MaxMindUpdater extends ScalaVerticle {
         webClient.getAbs(url)
           .putHeader(HttpHeaders.IF_MODIFIED_SINCE.toString, lastModified.orNull)
           .sendFuture().map((httpResponse: HttpResponse[Buffer]) => {
-          log.info("Download {}", url)
+          logger.info("Download {}", url)
           if (HttpResponseStatus.NOT_MODIFIED.code() == httpResponse.statusCode) {
-            log.info("{} not modified", url)
+            logger.info("{} not modified", url)
           } else if (HttpResponseStatus.OK.code() == httpResponse.statusCode) {
             httpResponse.bodyAsBuffer().map((buffer: Buffer) => {
               val bytes = extractDBFile(buffer)
@@ -88,13 +87,13 @@ class MaxMindUpdater extends ScalaVerticle {
           } else {
             val code = httpResponse.statusCode
             val message = httpResponse.bodyAsString().getOrElse("")
-            log.warn(s"Can't download $url. Response code $code: $message")
+            logger.warn("Can't download {}. Response code {}: {}", url, code, message)
           }
         }).onComplete {
           case Success(_) =>
             vertx.setTimer(updateInterval, _ => scheduleRemoteUpdate())
           case Failure(ex) =>
-            log.warn("Can't update MaxMind DB", ex)
+            logger.warn("Can't update MaxMind DB", ex)
             vertx.setTimer(updateRepeatInterval, _ => scheduleRemoteUpdate())
         }
       } finally
@@ -102,22 +101,22 @@ class MaxMindUpdater extends ScalaVerticle {
     })
   }
 
-  private def updateByLocal(): Unit = {
+  def updateByLocal(): Unit = {
     val maxMindDbPath = config.getString("maxmind.db.local.path")
     if (maxMindDbPath == null || maxMindDbPath.isEmpty) {
-      log.warn("Config option [maxmind.db.local.path] not specified")
+      logger.warn("Config option [maxmind.db.local.path] not specified")
     } else {
       val fileSystem = vertx.fileSystem()
       fileSystem.readDirFuture(maxMindDbPath, ".*\\.tar\\.gz").flatMap((strings: mutable.Buffer[String]) => {
         val path = strings.max
-        log.info("Load MaxMind DB {}", path)
+        logger.info("Load MaxMind DB {}", path)
         fileSystem.readFileFuture(path).flatMap((archiveBuffer: Buffer) => {
           val dbBuffer = extractDBFile(archiveBuffer)
           saveFile(dbBuffer, "local")
         }).map(_ => path)
       }).onComplete({
-        case Success(v) => log.info("Successfully update MaxMind DB from {}", v);
-        case Failure(ex) => log.error("Can't update MaxMind DB from " + maxMindDbPath, ex)
+        case Success(v) => logger.info("Successfully update MaxMind DB from {}", v);
+        case Failure(ex) => logger.error("Can't update MaxMind DB from " + maxMindDbPath, ex)
       })
     }
 
@@ -129,13 +128,13 @@ class MaxMindUpdater extends ScalaVerticle {
         var entry = archiveInputStream.getNextEntry
         while (entry != null) {
           if (archiveInputStream.canReadEntryData(entry)) {
-            log.debug("Find file {}", entry.getName)
+            logger.debug("Find file {}", entry.getName)
             if (entry.getName.endsWith(".mmdb")) {
               val bytes = IOUtils.toByteArray(archiveInputStream)
               return Buffer.buffer(bytes)
             }
           } else {
-            log.warn("Can't read entry {}", entry.getName)
+            logger.warn("Can't read entry {}", entry.getName)
           }
           entry = archiveInputStream.getNextEntry
         }
@@ -149,7 +148,7 @@ class MaxMindUpdater extends ScalaVerticle {
 
     fileSystem.createTempFileFuture(filePrefix + "_", ".mmmd").flatMap((dbPath: String) => {
       fileSystem.writeFileFuture(dbPath, dbBuffer).map(_ => {
-        log.info(s"Save to local file: [$dbPath]")
+        logger.info("Save to local file: [{}]", dbPath)
 
         vertx.eventBus().publish("maxmind/update", Option(dbPath))
 

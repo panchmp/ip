@@ -4,27 +4,25 @@ import java.io.File
 import java.net.InetAddress
 
 import com.maxmind.db.Reader
+import com.typesafe.scalalogging.StrictLogging
 import io.vertx.lang.scala.ScalaVerticle
 import io.vertx.scala.core.eventbus.Message
-import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
-class MaxMindService extends ScalaVerticle {
-  private val log = LoggerFactory.getLogger(classOf[MaxMindService])
-
+class MaxMindService extends ScalaVerticle with StrictLogging {
   private var reader: Option[Reader] = Option.empty
 
   override def start(): Unit = {
-    vertx.eventBus().localConsumer[String]("maxmind/ip", event => getIp(event))
+    vertx.eventBus().localConsumer[String]("maxmind/ip", event => ip(event))
     vertx.eventBus().localConsumer[String]("maxmind/update", event => updateReader(event))
   }
 
-  private def getIp(event: Message[String]): Unit = {
+  def ip(event: Message[String]): Unit = {
     Try({
       reader.map((value: Reader) => {
         val ip = event.body()
-        log.debug("Request ip {}", ip)
+        logger.debug("Request ip {}", ip)
 
         val address: InetAddress = InetAddress.getByName(ip)
         value.get(address)
@@ -46,7 +44,7 @@ class MaxMindService extends ScalaVerticle {
       path
     }) match {
       case Success(v) =>
-        log.info(s"Update by $v")
+        logger.info("Update by {}", v)
       case Failure(ex) =>
         event.fail(0, ex.getMessage)
     }

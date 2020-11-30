@@ -45,6 +45,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.typesafe.scala-logging</groupId>
+            <artifactId>scala-logging_${scala.prefix}</artifactId>
+            <version>3.9.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-lang-scala_${scala.prefix}</artifactId>
             <version>${vertx.scala.version}</version>

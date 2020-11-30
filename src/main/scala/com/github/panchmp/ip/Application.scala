@@ -4,6 +4,7 @@ package com.github.panchmp.ip
 import java.util
 
 import com.github.panchmp.ip.verticle.{MaxMindService, MaxMindUpdater, Server}
+import com.typesafe.scalalogging.StrictLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.prometheus.{PrometheusConfig, PrometheusMeterRegistry}
 import io.vertx.core.json.JsonObject
@@ -15,12 +16,10 @@ import io.vertx.micrometer.{Label, MicrometerMetricsOptions, VertxPrometheusOpti
 import io.vertx.scala.config.{ConfigRetriever, ConfigRetrieverOptions, ConfigStoreOptions}
 import io.vertx.scala.core._
 import io.vertx.scala.core.metrics.MetricsOptions
-import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success}
 
-object Application {
-  private val log = LoggerFactory.getLogger(Application.getClass)
+object Application extends StrictLogging {
 
   def main(args: Array[String]): Unit = {
     System.setProperty(LOGGER_DELEGATE_FACTORY_CLASS_NAME, Predef.classOf[SLF4JLogDelegateFactory].getName)
@@ -33,7 +32,7 @@ object Application {
 
     implicit val vertxExecutionContext: VertxExecutionContext = VertxExecutionContext.apply(vertx.getOrCreateContext())
 
-    val configRetrieverOptions = buildConfigRetrieverOptions().setScanPeriod(-1);
+    val configRetrieverOptions = buildConfigRetrieverOptions().setScanPeriod(-1)
 
     ConfigRetriever.create(vertx, configRetrieverOptions).getConfigFuture()
       .flatMap((config: JsonObject) => {
@@ -44,12 +43,12 @@ object Application {
           DeploymentOptions().setConfig(config).setInstances(config.getInteger("verticle.maxmind.instances")))
 
         vertx.deployVerticleFuture(nameForVerticle[MaxMindUpdater],
-          DeploymentOptions().setConfig(config).setInstances(1))
+          DeploymentOptions().setConfig(config).setInstances(1 /*always*/))
 
       }).onComplete {
-      case Success(_) => log.info("Vertx is started")
+      case Success(_) => logger.info("Vertx is started")
       case Failure(t) =>
-        log.error("Can't start Vertx", t)
+        logger.error("Can't start Vertx", t)
         vertx.closeFuture().onComplete {
           System.exit(1)
           return
