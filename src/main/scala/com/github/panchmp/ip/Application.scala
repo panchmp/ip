@@ -40,11 +40,11 @@ object Application {
         vertx.deployVerticleFuture(nameForVerticle[Server],
           DeploymentOptions().setConfig(config).setInstances(config.getInteger("verticle.server.instances")))
 
-        vertx.deployVerticleFuture(nameForVerticle[MaxMindUpdater],
-          DeploymentOptions().setConfig(config))
-
         vertx.deployVerticleFuture(nameForVerticle[MaxMindService],
           DeploymentOptions().setConfig(config).setInstances(config.getInteger("verticle.maxmind.instances")))
+
+        vertx.deployVerticleFuture(nameForVerticle[MaxMindUpdater],
+          DeploymentOptions().setConfig(config).setInstances(1))
 
       }).onComplete {
       case Success(_) => log.info("Vertx is started")

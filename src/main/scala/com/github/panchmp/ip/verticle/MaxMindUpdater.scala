@@ -23,6 +23,9 @@ import scala.util.{Failure, Success}
 class MaxMindUpdater extends ScalaVerticle {
   private val log = LoggerFactory.getLogger(classOf[MaxMindUpdater])
 
+  private var path: Option[String] = Option.empty
+  private var lastModified: Option[String] = Option.empty
+
   override def start(): Unit = {
     vertx.eventBus().localConsumer[String]("maxmind/update/local", (_: Message[String]) => {
       updateByLocal()
@@ -38,8 +41,7 @@ class MaxMindUpdater extends ScalaVerticle {
   }
 
   override def stop(): Unit = {
-    val localMap = vertx.sharedData().getLocalMap[String, String]("maxmind.db")
-    Option(localMap.get("path")).map((path: String) =>
+    path.foreach((path: String) =>
       deleteFile(path)
     )
   }
@@ -62,9 +64,6 @@ class MaxMindUpdater extends ScalaVerticle {
       val updateInterval = config.getLong("maxmind.db.update.interval", TimeUnit.HOURS.toMillis(4))
       val updateRepeatInterval = config.getLong("maxmind.db.update.repeat.interval", TimeUnit.MINUTES.toMillis(5))
 
-      val localMap = vertx.sharedData().getLocalMap[String, String]("maxmind.db")
-      val lastModified: String = localMap.get("lastModified")
-
       val webClientOptions = WebClientOptions()
         .setTryUseCompression(true)
 
@@ -75,7 +74,7 @@ class MaxMindUpdater extends ScalaVerticle {
       val webClient = WebClient.create(vertx, webClientOptions)
       try {
         webClient.getAbs(url)
-          .putHeader(HttpHeaders.IF_MODIFIED_SINCE.toString, lastModified)
+          .putHeader(HttpHeaders.IF_MODIFIED_SINCE.toString, lastModified.orNull)
           .sendFuture().map((httpResponse: HttpResponse[Buffer]) => {
           log.info("Download {}", url)
           if (HttpResponseStatus.NOT_MODIFIED.code() == httpResponse.statusCode) {
@@ -83,8 +82,8 @@ class MaxMindUpdater extends ScalaVerticle {
           } else if (HttpResponseStatus.OK.code() == httpResponse.statusCode) {
             httpResponse.bodyAsBuffer().map((buffer: Buffer) => {
               val bytes = extractDBFile(buffer)
-              val lastModifiedNew = httpResponse.getHeader(HttpHeaders.LAST_MODIFIED.toString).orNull
-              saveFile(bytes, Utils.parseRFC1123DateTime(lastModifiedNew).toString, lastModifiedNew)
+              val lastModifiedStr = httpResponse.getHeader(HttpHeaders.LAST_MODIFIED.toString).orNull
+              saveFile(bytes, Utils.parseRFC1123DateTime(lastModifiedStr).toString, lastModifiedStr)
             })
           } else {
             val code = httpResponse.statusCode
@@ -145,25 +144,25 @@ class MaxMindUpdater extends ScalaVerticle {
     }
   }
 
-  private def saveFile(dbBuffer: Buffer, filePrefix: String, lastModified: String = null): Future[Unit] = {
+  private def saveFile(dbBuffer: Buffer, filePrefix: String, newLastModified: String = null): Future[Unit] = {
     val fileSystem = vertx.fileSystem()
+
     fileSystem.createTempFileFuture(filePrefix + "_", ".mmmd").flatMap((dbPath: String) => {
       fileSystem.writeFileFuture(dbPath, dbBuffer).map(_ => {
-        log.info(s"Local file: [$dbPath], lastModified: [$lastModified]")
+        log.info(s"Save to local file: [$dbPath]")
 
-        val localMap = vertx.sharedData().getLocalMap[String, String]("maxmind.db")
+        vertx.eventBus().publish("maxmind/update", Option(dbPath))
 
-        val oldFilePath = localMap.put("path", dbPath)
-        if (!dbPath.equals(oldFilePath))
-          deleteFile(oldFilePath)
-
-        Option(lastModified)
-          .fold(localMap.remove("lastModified"))(localMap.put("lastModified", _))
+        path.foreach({
+          deleteFile
+        })
+        path = Option(dbPath)
+        lastModified = Option(newLastModified)
       })
     })
   }
 
-  private def deleteFile(path: String) = {
+  private def deleteFile(path: String): Unit = {
     Option(path).map(f => {
       if (vertx.fileSystem().existsBlocking(f)) {
         vertx.fileSystem().deleteBlocking(path)
